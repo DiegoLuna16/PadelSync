@@ -12,7 +12,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.padelsync.padelsync_core.dtos.UserDTO;
 import com.padelsync.padelsync_core.models.User;
 
 import io.jsonwebtoken.Claims;
@@ -36,32 +35,27 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         try {
             User user = new ObjectMapper().readValue(request.getInputStream(), User.class);
             return authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+                    new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
             );
         } catch (IOException e) {
             throw new RuntimeException("Error al procesar JSON", e);
         }
     }
 
-    public UserDTO generateTokenResponse(Authentication authResult) throws IOException {
-        org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authResult.getPrincipal();
-        String username = user.getUsername();
+    public String generateTokenResponse(Authentication authResult) throws IOException {
         Collection<? extends GrantedAuthority> roles = authResult.getAuthorities();
 
         Claims claims = Jwts.claims()
                 .add("authorities", new ObjectMapper().writeValueAsString(roles))
-                .add("username", username)
                 .build();
 
-        String token = Jwts.builder()
-                .subject(username)
+        return Jwts.builder()
+                .subject(authResult.getName())
                 .claims(claims)
                 .expiration(new Date(System.currentTimeMillis() + 3600000))
                 .issuedAt(new Date())
                 .signWith(SECRET_KEY)
                 .compact();
-
-                return new UserDTO(token, username, String.format("Hola %s, has iniciado sesión con éxito!", username));
-            }
+    }
 }
 

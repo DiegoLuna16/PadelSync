@@ -24,28 +24,28 @@ public class JpaUserDetailsService implements UserDetailsService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> optionalUser = repository.findByUsername(username);
-
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Optional<User> optionalUser = repository.findByEmail(email); 
+    
         if(optionalUser.isEmpty()) {
-            throw new UsernameNotFoundException(String.format("Username %s no existe en el sistema!", username));
+            throw new UsernameNotFoundException(String.format("Email %s no existe en el sistema!", email));
         }
-
+    
         User user = optionalUser.orElseThrow();
-
+    
         List<GrantedAuthority> authorities = user.getRoles().stream()
-        .map(role -> new SimpleGrantedAuthority(role.getName()))
-        .collect(Collectors.toList());
-
+            .map(role -> new SimpleGrantedAuthority(role.getName()))
+            .collect(Collectors.toList());
+    
         return new org.springframework.security.core.userdetails.User(
-            user.getUsername(),
+            user.getEmail(), // Usar email en lugar de username
             user.getPassword(),
             user.isEnabled(),
             true,
             true,
             true,
             authorities);
-
     }
+    
 
 }

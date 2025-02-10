@@ -6,8 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import com.padelsync.padelsync_core.dtos.ApiResponse;
-import com.padelsync.padelsync_core.dtos.UserDTO;
+import com.padelsync.padelsync_core.models.AuthResponse;
 import com.padelsync.padelsync_core.models.LoginRequest;
 import com.padelsync.padelsync_core.security.filter.JwtAuthenticationFilter;
 
@@ -25,23 +24,19 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserDTO>> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
-            // Usar AuthenticationManager para autenticar
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
-            
-            // Generar el token
-            UserDTO userDTO = jwtAuthenticationFilter.generateTokenResponse(authentication);
-            
-            // Crear respuesta
-            ApiResponse<UserDTO> response = new ApiResponse<>(userDTO, "Login exitoso", "success");
-            return ResponseEntity.ok(response);
+            String token = jwtAuthenticationFilter.generateTokenResponse(authentication);
+
+            AuthResponse authResponse = new AuthResponse(token);
+            return ResponseEntity.ok(authResponse);  
         } catch (Exception e) {
-            // En caso de error
-            ApiResponse<UserDTO> errorResponse = new ApiResponse<>(null, "Error en la autenticación. Username puto o password incorrectos!", "error");
-            return ResponseEntity.status(401).body(errorResponse);
+            return ResponseEntity.status(401).build();
         }
     }
+    
 }
+
