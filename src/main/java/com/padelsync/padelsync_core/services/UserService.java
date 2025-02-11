@@ -11,6 +11,8 @@ public interface UserService{
     User findById(Long id);
     List<User> findAll();
     Optional<User> update(Long id, User user);
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
     Optional<User> delete(Long id);
     boolean existsByUsername(String username);
     

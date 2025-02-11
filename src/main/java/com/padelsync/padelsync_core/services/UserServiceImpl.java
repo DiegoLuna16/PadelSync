@@ -99,5 +99,14 @@ public class UserServiceImpl implements UserService{
         return repository.existsByUsername(username);
     }
 
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return repository.findByUsername(username);
+    }
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return repository.findByEmail(email);
+    }
+
 
 }

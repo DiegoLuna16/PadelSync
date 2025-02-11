@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 .claims(claims)
                 .expiration(new Date(System.currentTimeMillis() + 3600000))
                 .issuedAt(new Date())
-                .signWith(SECRET_KEY)
+                .signWith(SECRET_KEY) // Use the SecretKey object
                 .compact();
     }
 }
