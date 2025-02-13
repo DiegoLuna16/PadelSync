@@ -9,6 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import com.padelsync.padelsync_core.dtos.ApiResponse;
 import com.padelsync.padelsync_core.dtos.UserDTO;
 import com.padelsync.padelsync_core.models.AuthResponse;
 import com.padelsync.padelsync_core.models.LoginRequest;
@@ -36,36 +37,35 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
             String token = jwtAuthenticationFilter.generateTokenResponse(authentication);
 
             AuthResponse authResponse = new AuthResponse(token);
-            return ResponseEntity.ok(authResponse);
+            ApiResponse<AuthResponse> response = new ApiResponse<>(authResponse, "Login exitoso", "SUCCESS");
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(401).build();
+            ApiResponse<AuthResponse> errorResponse = new ApiResponse<>(null, "Credenciales incorrectas", "FAIL");
+            return ResponseEntity.status(401).body(errorResponse);
         }
     }
 
     @GetMapping("/user")
-    public ResponseEntity<UserDTO> getUserFromToken(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<ApiResponse<UserDTO>> getUserFromToken(@RequestHeader("Authorization") String token) {
         try {
-            // Extract the token (remove "Bearer " prefix)
             if (token == null || !token.startsWith("Bearer ")) {
-                return ResponseEntity.status(401).build();
+                ApiResponse<UserDTO> errorResponse = new ApiResponse<>(null, "Token inválido", "FAIL");
+                return ResponseEntity.status(401).body(errorResponse);
             }
             String jwt = token.substring(7);
-
-            // Extract email from token
             String email = jwtService.extractEmail(jwt);
 
-            // Retrieve user details
             User user = userService.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-            // Map User to UserDTO
             UserDTO userDto = new UserDTO(
                     user.getId(),
                     user.getUsername(),
@@ -77,9 +77,11 @@ public class AuthController {
                     user.getGender().getName(),
                     user.getRoles().stream().map(role -> role.getName()).collect(Collectors.toList()));
 
-            return ResponseEntity.ok(userDto);
+            ApiResponse<UserDTO> response = new ApiResponse<>(userDto, "Usuario obtenido correctamente", "SUCCESS");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(401).build();
+            ApiResponse<UserDTO> errorResponse = new ApiResponse<>(null, "Error al obtener el usuario", "FAIL");
+            return ResponseEntity.status(401).body(errorResponse);
         }
     }
 }
